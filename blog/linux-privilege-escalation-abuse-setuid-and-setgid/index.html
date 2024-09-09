@@ -4,8 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/style.css">
-    <title>Martin Konopasek</title>
+    <title>Linux Privilege Escalation - abuse Setuid and Setgid</title>
 </head>
+<style>
+    @media (max-width: 600px) {
+        .post-full img {
+            width: 100%;
+        }
+    }
+</style>
 <body>
     <div id="nav-content">
         <h2><a href="/">/Martin Konopásek</a></h2>
@@ -17,7 +24,27 @@
     <hr>
     <div class="post-full">
         <h1>Linux Privilege Escalation - abuse Setuid and Setgid</h1>
-        
+        <p>The setuid/setgid (SUID/SGID) bits allows the binary to run with the privileges of the user/group owner instead of those of the user executing it. You can spot these files by the 's' character instead of 'x' in owner permissions. Kali also highlights these files with a red color.</p>
+        <img src="./screenshot1.png">
+        <h2>Creating own binary and adding Setuid</h2>
+        <p>I will compile my own program which will simply read the <span class="text-high">/etc/shadow</span> file. This demonstration will show you how the program will behave with and without the suid bit set.</p>
+        <img src="./screenshot2.png">
+        <p>I got permission denied message, because I ran the program as a normal user which don't have permission to read the shadow file.</p>
+        <img src="./screenshot3.png">
+        <p>After adding the suid bit, I am able to run the program successfully as a normal user. The program has been run in the context of the file owner (root in this case), who has privilege to read the shadow file.</p>
+        <p>You can add suid bit either by method above or using <span class="text-high">"chmod u+s filename"</span>.</p>
+        <p>You can add sgid by <span class="text-high">"chmod 2755 filename"</span> or <span class="text-high">"chmod g+s filename"</span>.</p>
+        <h2>Finding suid files in the system</h2>
+        <p>You can get all files with suid bit set using <span class="text-high">"find / -perm /4000 2> /dev/null"</span> command.</p>
+        <p>For finding all files with sgid use <span class="text-high">"find / -perm /2000 2> /dev/null"</span>.</p>
+        <p><span class="text-high">"2> /dev/null"</span> part of the command outputs all errors to null, so you don't have your screen fluttered by Permission denied messages.</p>
+        <h2>How it can introduce security problems</h2>
+        <p>If you have ran the find command on your Linux system, you can see some binaries which have suid or sgid set. That's completely ok, for example <span class="text-high">su</span> and <span class="text-high">sudo</span> commands require it to work correctly.</p>
+        <p>Security problems start when admin of the Linux machine add suid or sgid to binaries, which can be abused to accomplish privilege escalation.</p>
+        <p>For example, if admin set suid for <span class="text-high">python</span> binary, you can easily get root shell.</p>
+        <h2>Conclusion</h2>
+        <p>Always look for binaries in the system with suid that you think shouldn't be freely run as root. For admins, think twice before setting suid to anything.</p>
+        <p>Thanks for reading, I hope you have found some useful information for your hacking adventures 🐱‍💻</p>
     </div>
 </body>
 </html>

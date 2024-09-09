@@ -220,6 +220,10 @@ hr {
     margin-bottom: 20px;
 }
 
+.text-high {
+    color: white;
+}
+
 @media (max-width: 910px) {
     #introduction {
         flex-direction: column;
