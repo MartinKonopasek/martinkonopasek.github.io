@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/style.css">
+    <title>Nmap basics</title>
+</head>
+<style>
+    @media (max-width: 1280px) {
+        .post-full img {
+            width: 100%;
+        }
+    }
+</style>
+<body>
+    <div id="nav-content">
+        <h2><a href="/">/Martin Konopásek</a></h2>
+        <div id="nav-links">
+            <h2><a href="/blog">/blog</a></h2>
+            <h2><a href="/links">/links</a></h2>
+        </div>
+    </div>
+    <hr>
+    <div class="post-full">
+        <h1>Nmap basics</h1>
+        <p>Port scanning is one of the essential techniques used when performing active reconnaissance. Nmap allows performing scans on both TCP and UDP ports. On a top of it, Nmap is also capable of giving us more information about services running on these ports.</p>
+        <p>We will look at some basic options and how Nmap works under the hood when performing TCP scanning using a tool called Wireshark.</p>
+        <h2>Simple scan</h2>
+        <p>For these examples, I will be performing scans on <span class="text-high">scanme.nmap.org</span>. It's maintained by Nmap creators, you are allowed to perform scans on this address, but don't overdo it and get your IP blocked.</p>
+        <p><span class="text-high">Remember, you shouldn't perform any scans on IPs without permission!!!</span></p>
+        <img src="./simple-scan.png">
+        <p>By default, without any options, Nmap first try to probe the target to know if it's up. Some targets might block these probes, so we need to add <span class="text-high">-Pn</span> option to skip it.</p>
+        <img src="./simple-scan-2.png">
+        <h2>How the TCP scanning actually works</h2>
+        <img src="./open-port-scan.png" style="margin-top: 10px;">
+        <p>Nmap simply tries to perform <span class="text-high">TCP three-way handshake</span>. After the handshake is completed, session is terminated by sending <span class="text-high">RST flag</span>.</p>
+        <img src="./wireshark-port-80.png">
+        <p>Here is an example of how the process looks via Wireshark. I highly recommend capturing your own packets while performing scans and explore them. It will help you to understand everything better, especially if you try other scanning techniques that Nmap provides.</p>
+        <img src="./closed-port-scan.png" style="margin-top: 60px;">
+        <p>In case of scanning closed port, target simply <span class="text-high">refuses to complete the handshake</span> and sends <span class="text-high">RST flag</span> right away.</p>
+        <img src="./wireshark-port-21.png">
+        <h2>Specify port range</h2>
+        <p>By default without any options provided, Nmap scans the <span class="text-high">1000 most common ports</span>.</p>
+        <p>You can specify own port range using <span class="text-high">-p</span> option. For example, <span class="text-high">-p1-65535</span> will scan all ports <span class="text-high">from 1 to 65535</span>.</p>
+        <p>Scanning only single port is also possible by adding <span class="text-high">-p21</span> option. You can also add another ports divided by a comma, for example <span class="text-high">-p21,80,110</span>.</p>
+        <h2>Service version</h2>
+        <p>Nmap can also give you more information about the service running on the open port. A very useful piece of information is the service version, by which you can tell if the service is vulnerable.</p>
+        <p>Just add <span class="text-high">-sV</span> option.</p>
+        <p>It's also important to note that the service version <span class="text-high">doesn't have to be always 100% correct</span>.</p>
+        <h2>OS detection</h2>
+        <p>Useful information might also be which operating system is running on the target machine.</p>
+        <p>You can enable OS detection by adding <span class="text-high">-O</span> option.</p>
+        <p>Same as service version, results doesn't have to be always 100% correct.</p>
+        <h2>Script scan</h2>
+        <p>Nmap's Script Scan is a powerful feature that utilizes the <span class="text-high">Nmap Scripting Engine</span> to perform detailed vulnerability detection.</p>
+        <p>To enable this feature, just add <span class="text-high">-sC</span> option.</p>
+        <h2>Putting it all together</h2>
+        <img src="./full-scan.png">
+        <p>You can see I have used <span class="text-high">-A</span> option in this example. This option enables all 3 Nmap features mentioned above. It's same as writing <span class="text-high">-O -sV -sC</span>.</p>
+        <p>I have specified <span class="text-high">-p80</span> to scan only <span class="text-high">port 80</span>.</p>
+        <h2>Conclusion</h2>
+        <p>Nmap is a very useful and feature rich port scanner. We have only scratched a surface in this article. For full documentation, visit <a href="https://nmap.org/" target="_blank">nmap.org</a></p>
+    </div>
+</body>
+</html>
