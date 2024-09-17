@@ -191,6 +191,19 @@ hr {
     max-width: 2000px;
 }
 
+.post-full img {
+    margin-bottom: 10px;
+}
+
+.post-full a {
+    color: white;
+    text-decoration: underline;
+}
+
+.post-full a:hover {
+    color: rgba(255, 255, 255, 0.741);
+}
+
 .post-full h1 {
     font-family: "Ubuntu Mono", system-ui;
     color: white;
