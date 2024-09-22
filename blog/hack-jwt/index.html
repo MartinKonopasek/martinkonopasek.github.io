@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/style.css">
+    <title>Hack JWT</title>
+</head>
+<style>
+    @media (max-width: 1000px) {
+        .post-full img {
+            width: 100%;
+        }
+    }
+</style>
+<body>
+    <div id="nav-content">
+        <h2><a href="/">/Martin Konopásek</a></h2>
+        <div id="nav-links">
+            <h2><a href="/blog">/blog</a></h2>
+            <h2><a href="/links">/links</a></h2>
+        </div>
+    </div>
+    <hr>
+    <div class="post-full">
+        <h1>Hack JWT</h1>
+        <p>JSON web token is a standardized format for exchanging signed JSON data between 2 parties. In context of web applications, they are used for authentication, session handling and access control mechanisms.</p>
+        <p>Unlike other session tokens, JWTs are fully stored on the <span class="text-high">client side</span>. Server doesn't have to store any user data contained in the JWT.</p>
+        <h2>JWT format</h2>
+        <p>JWT consists of 3 parts - <span class="text-high">header, payload and signature</span>.</p>
+        <p><span style="color: #ff3333;">Header</span> contains information about which algorithm will be used for signing the JWT.</p>
+        <p><span style="color: #4781ff;">Body</span> is used for including data for web application, it can contain basically anything.</p>
+        <p><span style="color: #65ff57">Signature</span> part is checked by server to validate the JWT. I will explain this process more deeply later.</p>
+        <img src="./jwt-format.png">
+        <p>As you have probably realized, data is encoded using <span class="text-high">Base64</span> and all parts are divided by <span class="text-high">dot</span>.</p>
+        <h2>JWT signing</h2>
+        <p>You already know that JWTs are fully stored on the client side, but how can the server be sure that none of the data in the payload was modified by the user?</p>
+        <p>This is done by verifying the JWT using a signing algorithm. There are 2 most used signing algorithms in the world of JWTs - <span class="text-high">HS256 and RS256</span>.</p>
+        <h3>HS256</h3>
+        <p>In HS256 server uses <span class="text-high">1 secret key for both creating the JWT and verifying it</span>.</p>
+        <p>Signing process can be described like this:</p>
+        <img src="./HS256-sign.png">
+        <p>If user modifies any data in header or body, it must be signed using a correct secret key to create valid signature. <span class="text-high">User cannot do that, since only server knows the secret key.</span></p>
+        <img src="./HS256-process.png" style="padding-bottom: 20px;">
+        <h3>RS256</h3>
+        <p>There are 2 keys used in RS256, <span class="text-high">public and private key</span>. Private one is used for JWT creation and public one for verification.</p>
+        <p>Since private key is kept in secret on server, user cannot create valid signature for JWT with modified data.</p>
+        <h2>Attacking JWT</h2>
+        <p>Attacks involves sending modified JWT content to web application server. The main goal is usually to impersonate other users of the application.</p>
+        <p><span class="text-high">Note:</span> You can try all the coming JWT attacks using PortSwigger academy labs. I will leave a link to the lab at the end of every attack explanation.</p>
+        <h3>Flawed JWT signature verification</h3>
+        <p>If server doesn't correctly verify the JWT coming from user, nothing stops malicious attacker to modify any data in JWT body.</p>
+        <p>Attacker can sign the JWT with any secret key, verification will be always successful in this case.</p>
+        <p><a href="https://portswigger.net/web-security/jwt/lab-jwt-authentication-bypass-via-unverified-signature" target="_blank">PortSwigger lab</a></p>
+        <h3>Accepting tokens with no signature</h3>
+        <p>In every JWT header, the <span class="text-high">"alg"</span> parameter must be specified. This parameter tells which signing algorithm is used for creating the signature part.</p>
+        <p>If you set the alg parameter to <span class="text-high">"none"</span> server won't verify the signature. In correct scenario, the server should reject these tokens with no signature, but that's no always the case.</p>
+        <p>When sending the JWT to server, you can leave the signature part empty, but a <span class="text-high">trailing dot must be provided</span>.</p>
+        <img src="./attack-none.png">
+        <p><a href="https://portswigger.net/web-security/jwt/lab-jwt-authentication-bypass-via-flawed-signature-verification" target="_blank">PortSwigger lab</a></p>
+        <h2>Brute-forcing secret key</h2>
+        <p>In HS256 simple string is used as the secret key. If the secret key is not long enough or predictable, it can be cracked using <span class="text-high">dictionary attack or brute-forcing attack</span>.</p>
+        <p>Attacker takes the header and body part, then simply runs it trough the signing algorithm with different secret keys. If any of the final signatures matches with the original signature from the server, correct key has been found.</p>
+        <p>Since all the cracking happens locally on attacker's machine, there are no web app rate limits that could stop him.</p>
+        <p>You can use hashcat to crack the the key using command: <span class="text-high">hashcat -a 0 &#60jwt&#62 &#60wordlist&#62</span></p>
+        <p><a href="https://github.com/wallarm/jwt-secrets/blob/master/jwt.secrets.list" target="_blank">Wordlist to complete the lab</a></p>
+        <p><a href="https://portswigger.net/web-security/jwt/lab-jwt-authentication-bypass-via-weak-signing-key" target="_blank">PortSwigger lab</a></p>
+        <h2>JWT header parameter injections</h2>
+        <p>There is another optional parameter in JWT - <span class="text-high">"jwk"</span>. This parameter allows the server to embed their own public key to JWT itself.</p>
+        <p>Server should always use only limited whitelist of public keys to verify JWT signatures.</p>
+        <p>If whitelist isn't configured, attacker can embed his own RSA public key in the jwk parameter and sign the modified token with his private key.</p>
+        <img src="./attack-jwk.png">
+        <p><span class="text-high">"kid"</span> parameters must match, otherwise server would still use its own public key for verification.</p>
+        <p><a href="https://portswigger.net/web-security/jwt/lab-jwt-authentication-bypass-via-jwk-header-injection" target="_blank">PortSwigger lab</a></p>
+        <h2>Injecting self-signed JWTs via the jku parameter</h2>
+        <p>Using <span class="text-high">"jku"</span> parameter, server can set URL address to fetch JWK keys from.</p>
+        <p>Server should always be able to fetch keys only from trusted domains, if that's not the case attacker can inject own URL address to jku parameter.</p>
+        <p>JWT is then verified the same way as in the previous attack.</p>
+        <img src="./attack-jku.png">
+        <p><a href="https://portswigger.net/web-security/jwt/lab-jwt-authentication-bypass-via-jku-header-injection" target="_blank">PortSwigger lab</a></p>
+        <h2>Path traversal in the kid parameter</h2>
+        <p>So far, you have used <span class="text-high">"kid"</span> parameter to point the server to use your injected keys.</p>
+        <p>In some cases, this parameter can be configured to point to a particular entry in a database, or even the name of a file.</p>
+        <p>If the parameter is vulnerable to <span class="text-high">path traversal</span>, attacker can point the server to use file from its file system as the verification key.</p>
+        <p>The simplest approach is to use <span class="text-high">/dev/null</span> file, because it's an empty file, reading it returns an empty string. Signing the token with empty string will result in a valid signature.</p>
+        <img src="./attack-path.png">
+        <p><a href="https://portswigger.net/web-security/jwt/lab-jwt-authentication-bypass-via-kid-header-path-traversal" target="_blank">PortSwigger lab</a></p>
+        <h2>Conclusion</h2>
+        <p>JWT is a very popular and powerful way to perform authentication in modern web applications. Also, there are many security pitfalls, which can lead to critical vulnerabilities. Developers should always use the latest versions of battle tested 3rd party libraries for implementing JWT.</p>
+        <p>Thank you for reading, I hope you have learned some new things about this topic 🐱‍💻</p>
+        <p><a href="https://portswigger.net/web-security/jwt" target="_blank">Source</a></p>
+    </div>
+</body>
+</html>
