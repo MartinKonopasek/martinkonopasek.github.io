@@ -223,6 +223,15 @@ hr {
     margin-bottom: 10px;
 }
 
+.post-full h3 {
+    font-family: "Ubuntu Mono", system-ui;
+    color: white;
+    font-size: 24px;
+    font-weight: 300;
+
+    margin-bottom: 10px;
+}
+
 .post-full p {
     font-family: "Lora", system-ui;
     color: rgba(255, 255, 255, 0.689);
