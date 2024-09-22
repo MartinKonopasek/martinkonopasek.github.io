@@ -54,7 +54,7 @@
         <p><a href="https://portswigger.net/web-security/jwt/lab-jwt-authentication-bypass-via-unverified-signature" target="_blank">PortSwigger lab</a></p>
         <h3>Accepting tokens with no signature</h3>
         <p>In every JWT header, the <span class="text-high">"alg"</span> parameter must be specified. This parameter tells which signing algorithm is used for creating the signature part.</p>
-        <p>If you set the alg parameter to <span class="text-high">"none"</span> server won't verify the signature. In correct scenario, the server should reject these tokens with no signature, but that's no always the case.</p>
+        <p>If you set the alg parameter to <span class="text-high">"none"</span> server won't verify the signature. In correct scenario, the server should reject these tokens with no signature, but that's not always the case.</p>
         <p>When sending the JWT to server, you can leave the signature part empty, but a <span class="text-high">trailing dot must be provided</span>.</p>
         <img src="./attack-none.png">
         <p><a href="https://portswigger.net/web-security/jwt/lab-jwt-authentication-bypass-via-flawed-signature-verification" target="_blank">PortSwigger lab</a></p>
