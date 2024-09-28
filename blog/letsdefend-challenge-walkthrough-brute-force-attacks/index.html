@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/style.css">
+    <title>LetsDefend Challenge Walkthrough - Brute Force Attacks</title>
+</head>
+<style>
+    @media (max-width: 1170px) {
+        .post-full img {
+            width: 100%;
+        }
+    }
+</style>
+<body>
+    <div id="nav-content">
+        <h2><a href="/">/Martin Konopásek</a></h2>
+        <div id="nav-links">
+            <h2><a href="/blog">/blog</a></h2>
+            <h2><a href="/links">/links</a></h2>
+        </div>
+    </div>
+    <hr>
+    <div class="post-full">
+       <h1>LetsDefend Challenge Walkthrough - Brute Force Attacks</h1>
+       <p>In this challenge we will go through 3 brute force attacks on HTTP, RDP and SSH services.</p>
+       <p>We will use Wireshark, and it's powerful filters to find answers to challenge questions in HTTP and RDP part.</p>
+       <p>For the SSH part of this challenge, we got only raw log file from the server. Linux commands, especially "grep" will help us to get all the important information we need.</p>
+       <p><a href="https://app.letsdefend.io/challenge/brute-force-attacks" target="_blank">Challenge</a></p>
+       <h2>Preparation</h2>
+       <p>After launching terminal, go to Desktop/ChallengeFile directory. Unzip the challenge files using 7za command.</p>
+       <img src="./linux-command-unzip.png">
+       <p>There should be a new "BruteForce" directory, after listing its content you should see 2 files.</p>
+       <img src="./linux-command-navigate-file.png">
+       <h2>Wireshark</h2>
+       <p>The first part of the challenge consists of investigating pcap file with Wireshark. You can open the file using the command line like this...</p>
+       <img src="./linux-command-wireshark.png">
+       <p>After going to Statistics -> Conversations, you can see the most amount of packets is sent between 192.168.190.137 and 51.116.96.181.</p>
+       <img src="./wireshark-conversations.png" width="1000">
+       <p>We can set filter to list all the packets exchanged between these 2 addresses. Adding "http" to the end of the filter will list only HTTP protocol packets.</p>
+       <p>Just by looking at the first 2 packets, we can tell that <span class="text-high">192.168.190.137 is client</span> and <span class="text-high"> 51.116.96.181 is server</span>.</p>
+       <img src="./wireshark-filter-http.png" width="1000">
+       <p><span class="text-high">Question: What is the IP address of the server targeted by the attacker's brute-force attack?</span></p>
+       <p><span class="text-high">Answer: 51.116.96.181</span></p>
+       <p>After looking at all the HTTP requests sent by attacker, you can see that all of them are POST requests to <span class="text-high">/index.php</span> directory.</p>
+       <p><span class="text-high">Question: Which directory was targeted by the attacker's brute-force attempt?</span></p>
+       <p><span class="text-high">Answer: index.php</span></p>
+       <p>To tell if any of the login attempts were successful, I would check the HTTP status code of the responses. That's not the way here, all the responses have 200 OK status code.</p>
+       <p>I checked the body of the first response. You can do that by clicking left mouse button to the response packet -> Follow -> HTTP Stream.</p>
+       <p>You can see there is <span class="text-high">"Incorrect"</span> string in the p tag of HTML body.</p>
+       <img src="./wireshark-http-response.png" width="1000">
+       <p>I guess the successful login attempt should contain <span class="text-high">"Correct"</span> in the response, right? You can filter that by adding <span class="text-high">data-text-lines contains "Correct"</span>.</p>
+       <img src="./wireshark-http-response-filter.png" width="1000">
+       <p>After checking the packet that was listed after applying the filter, you can tell It truly contains the "Correct" string.</p>
+       <p>By following the HTTP stream of this packet, you can inspect the HTTP request including the valid credentials.</p>
+       <img src="./wireshark-http-credentials.png" width="1000">
+       <p><span class="text-high">Question: Identify the correct username and password combination used for login.</span></p>
+       <p><span class="text-high">Answer: web-hacker:admin12345</span></p>
+       <p>For the RDP part of this challenge, we will get all the relevant packets by adding <span class="text-high">"rdp"</span> to filter. All the accounts that attacker attempted to compromise will be listed by <span class="text-high">"rdp.neg_type == 0x01"</span> filter.</p>
+       <p>There are many packets listed after applying the filter, but only 7 of the usernames are unique.</p>
+       <img src="./wireshark-rdp.png" width="1000">
+       <p><span class="text-high">Question: How many user accounts did the attacker attempt to compromise via RDP brute-force?</span></p>
+       <p><span class="text-high">Answer: 7</span></p>
+       <img src="./wireshark-rdp-client.png" width="1000">
+       <p><span class="text-high">Question: What is the “clientName” of the attacker's machine?</span></p>
+       <p><span class="text-high">Answer: t3m0-virtual-ma</span></p>
+       <h2>SSH</h2>
+       <p>For this part, you have to investigate the <span class="text-high">"auth.log"</span> file.</p>
+       <p>After analyzing the logs, I found that all the unsuccessful attempts includes <span class="text-high">"Failed password"</span> string, successful ones includes <span class="text-high">"Accepted password"</span>.</p>
+       <p>By running - <span class="text-high">grep "Accepted password" auth.log</span> command, you will get all the successful attempts.</p>
+       <img src="./linux-log.png" width="1000">
+       <p><span class="text-high">Question: When did the user last successfully log in via SSH, and who was it?</span></p>
+       <p><span class="text-high">Answer: mmox:11:43:54</span></p>
+       <p>To get all number of all the unsuccessful attempts, you can run - <span class="text-high">grep "Failed password" auth.log | wc -l</span>.</p>
+       <p><span class="text-high">Question: How many unsuccessful SSH connection attempts were made by the attacker?</span></p>
+       <p><span class="text-high">Answer: 7480</span></p>
+       <p>A simple "brute force" search on the <a href="https://attack.mitre.org/" target="_blank">MITRE ATT&CK</a> website should lead you <a href="https://attack.mitre.org/techniques/T1110/" target="_blankhttps://attack.mitre.org/techniques/T1110/">here</a>.</p>
+       <p><span class="text-high">Question: What technique is used to gain access?</span></p>
+       <p><span class="text-high">Answer: T1110</span></p>
+    </div>
+</body>
+</html>
