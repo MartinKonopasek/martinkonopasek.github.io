@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="/style.css">
+    <link rel="shortcut icon" href="/favicon.webp" type="image/x-icon">
     <title>TryHackMe - Agent Sudo</title>
 </head>
 <style>
@@ -98,7 +99,7 @@
         <p>After quick search I found that sudo <span class="text-high">version 1.8.21p2</span> has vulnerability - <span class="text-high">CVE-2019-14287</span>.</p>
         <p><span class="text-high">Question: CVE number for the escalation?</span></p>
         <p><span class="text-high">Answer: CVE-2019-14287</span></p>
-        <h3>Quick explaination of the vulnerability</h3>
+        <h3>Quick explanation  of the vulnerability</h3>
         <p>CVE-2019-14287 vulnerability can be used in situation where you are not allowed to run the sudo commands as the root user, but you can run commands as other users.</p>
         <p>It can be done by adding <span class="text-high">-u</span> option to the sudo command followed by the user name.</p>
         <p>This option also allows passing UID instead of the user name -> <span class="text-high">#{UID}</span>.</p>
