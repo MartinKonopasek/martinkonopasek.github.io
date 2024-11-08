@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/style.css">
+    <title>TryHackMe - Agent Sudo</title>
+</head>
+<style>
+    @media (max-width: 1170px) {
+        .post-full img {
+            width: 100%;
+        }
+    }
+</style>
+<body>
+    <div id="nav-content">
+        <h2><a href="/">/Martin Konopásek</a></h2>
+        <div id="nav-links">
+            <h2><a href="/blog">/blog</a></h2>
+            <h2><a href="/links">/links</a></h2>
+        </div>
+    </div>
+    <hr>
+    <div class="post-full">
+        <h1>TryHackMe - Agent Sudo</h1>
+        <img src="./hb3b4j7i.bmp" width="200">
+        <p><a href="https://tryhackme.com/r/room/agentsudoctf" target="_blank">CTF link here</a></p>
+        <h2>Enumerate</h2>
+        <p>We will start by running nmap scan on the target machine.</p>
+        <img src="./agentsudo-nmap.png">
+        <p>We can see 3 open ports - FTP, SSH, HTTP.</p>
+        <p><span class="text-high">Question: How many open ports?</span></p>
+        <p><span class="text-high">Answer: 3</span></p>
+        <p>Let's try send request to the HTTP.</p>
+        <img src="./agentsudo-curl-1.png">
+        <p>We will need to edit our User-Agent HTTP header to match the agent codename.</p>
+        <p><span class="text-high">Question: How you redirect yourself to a secret page?</span></p>
+        <p><span class="text-high">Answer: user-agent</span></p>
+        <p>That can be done by adding <span class="text-high">-A</span> option to curl command followed by the user-agent we want to use. The question still remains which codename should we use.</p>
+        <p>Let's brute-force it using this simple inline bash script:</p>
+        <p><span class="text-high">for char in {A..Z}; do echo -n "$char: "; curl -A "$char" -o /dev/null -s -w "%{http_code}\n" "http://10.10.247.104:80"; done</span></p>
+        <img src="./agentsudo-curl-2.png" width="1500">
+        <p>We can see that letter <span class="text-high">C</span> redirects as somewhere.</p>
+        <p>Finally we send another request with user-agent C, don't forget to add <span class="text-high">-L</span> option to the curl command to follow redirects.</p>
+        <img src="./agentsudo-curl-3.png">
+        <p>Response reveals the agent name is <span class="text-high">"chris"</span>.</p>
+        <p><span class="text-high">Question: What is the agent name?</span></p>
+        <p><span class="text-high">Answer: chris</span></p>
+        <h2>Hash cracking and brute-force</h2>
+        <p>The weak password note suggests we should be able to perform a brute-force attack on the FTP service we enumerated earlier.</p>
+        <p>Hydra will help us with that. I will use already installed wordlist in kali - <span class="text-high">/usr/share/wordlists/john.lst</span>.</p>
+        <img src="./agentsudo-hydra.png">
+        <p><span class="text-high">Question: FTP password?</span></p>
+        <p><span class="text-high">Answer: crystal</span></p>
+        <p>After logging to the FTP server, we get 3 files.</p>
+        <img src="./agentsudo-files.png">
+        <p>Let's read the message first.</p>
+        <img src="./agentsudo-message.png" width="1500">
+        <p>According to the message, the downloaded pictures should contain some secret information.</p>
+        <p>We can try use binwalk tool to find files hidden in the pictures.</p>
+        <img src="./agentsudo-binwalk.png">
+        <p>We managed to get zip file out of the picture, but it's protected by password. We can again try to brute-force the password.</p>
+        <p>John tool will help us with that. First, we need to get the hash of the password from the zip file using <span class="text-high">zip2john</span> and output it to any file.</p>
+        <p>After that we are ready to crack the password, I have used the same wordlist as the last time.</p>
+        <img src="./agentsudo-john.png">
+        <p><span class="text-high">Question: Zip file password?</span></p>
+        <p><span class="text-high">Answer: alien</span></p>
+        <p>After unzipping the file, we found another message.</p>
+        <img src="./agentsudo-message-2.png">
+        <p>The <span class="text-high">QXJlYTUx</span> string seems to be encoded. We can get the original text by decoding it from base64.</p>
+        <img src="./agentsudo-base64.png">
+        <p><span class="text-high">Question: steg password?</span></p>
+        <p><span class="text-high">Answer: Area51</span></p>
+        <p>This password will help us in trying another secret file in the second picture. I have used steghide tool to extract the file. The Area51 string is used as the passphrase.</p>
+        <img src="./agentsudo-steghide.png">
+        <p>The extracted text file gives us everything we need to move forward and login to SSH.</p>
+        <p><span class="text-high">Question: Who is the other agent (in full name)?</span></p>
+        <p><span class="text-high">Answer: james</span></p>
+        <p><span class="text-high">Question: SSH password?</span></p>
+        <p><span class="text-high">Answer: hackerrules!</span></p>
+        <h2>Capture the user flag</h2>
+        <p>After logging to SSH we can found the user flag.</p>
+        <img src="./agentsudo-user.png">
+        <p><span class="text-high">Question: What is the user flag?</span></p>
+        <p><span class="text-high">Answer: b03d975e8c92a7c04146cfa7a5a313c7</span></p>
+        <p>To get answer for the second question we need to download the jpg image.</p>
+        <img src="./agentsudo-scp.png">
+        <p>I have done reverse image search using tineye website. Hint suggest we should use Foxnews article to find the incident name. We can filter just results for <span class="text-high">foxnews.com</span>.</p>
+        <img src="./agentsudo-reverse.png">
+        <img src="./agentsudo-foxnews.png">
+        <p><span class="text-high">Question: What is the incident of the photo called?</span></p>
+        <p><span class="text-high">Answer: Roswell alien autopsy</span></p>
+        <h2>Privilege escalation</h2>
+        <p>As the CTF name hints we will probably need to use <span class="text-high">sudo</span> command to escalate our privileges.</p>
+        <p>First let's find out the version of the sudo.</p>
+        <img src="./agentsudo-sudo.png">
+        <p>After quick search I found that sudo <span class="text-high">version 1.8.21p2</span> has vulnerability - <span class="text-high">CVE-2019-14287</span>.</p>
+        <p><span class="text-high">Question: CVE number for the escalation?</span></p>
+        <p><span class="text-high">Answer: CVE-2019-14287</span></p>
+        <h3>Quick explaination of the vulnerability</h3>
+        <p>CVE-2019-14287 vulnerability can be used in situation where you are not allowed to run the sudo commands as the root user, but you can run commands as other users.</p>
+        <p>It can be done by adding <span class="text-high">-u</span> option to the sudo command followed by the user name.</p>
+        <p>This option also allows passing UID instead of the user name -> <span class="text-high">#{UID}</span>.</p>
+        <p>Vulnerable sudo version incorrectly handles UIDs <span class="text-high">-1</span> and <span class="text-high">4294967295</span>. Sudo interprets this as root (UID 0) giving as permission to run the command.</p>
+        <img src="./agentsudo-root1.png">
+        <img src="./agentsudo-root2.png">
+        <p>By gaining root shell we can simply read the final message in /root directory.</p>
+        <img src="./agentsudo-rootflag.png">
+        <p><span class="text-high">Question: What is the root flag?</span></p>
+        <p><span class="text-high">Answer: b53a02f55b57d4439e3341834d70c062</span></p>
+        <p><span class="text-high">Question: (Bonus) Who is Agent R?</span></p>
+        <p><span class="text-high">Answer: DesKel</span></p>
+    </div>
+</body>
+</html>
