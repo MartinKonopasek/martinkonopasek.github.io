@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/style.css">
+    <link rel="shortcut icon" href="/favicon.webp" type="image/x-icon">
+    <title>TryHackMe - Lazy Admin</title>
+</head>
+<style>
+    @media (max-width: 1170px) {
+        .post-full img {
+            width: 100%;
+        }
+    }
+</style>
+<body>
+    <div id="nav-content">
+        <h2><a href="/">/Martin Konopásek</a></h2>
+        <div id="nav-links">
+            <h2><a href="/blog">/blog</a></h2>
+            <h2><a href="/links">/links</a></h2>
+        </div>
+    </div>
+    <hr>
+    <div class="post-full">
+        <h1>TryHackMe - Lazy Admin</h1>
+        <p><a href="https://tryhackme.com/r/room/lazyadmin" target="_blank">CTF link here</a></p>
+        <img src="./lazyadmin-nmap.png" width="700">
+        <p>Nmap reveals HTTP server running on <span class="text-high">port 80</span>.</p>
+        <p>Root directory shows default Apache page. Let's try to find some directories using <span class="text-high">dirbuster</span>.</p>
+        <img src="./lazyadmin-dirb1.png" width="1300">
+        <p><span class="text-high">/content</span> directory was found, but still nothing interesting there too. We can continue fuzzing.</p>
+        <img src="./lazyadmin-dirb2.png" width="1300">
+        <p>This looks better.</p>
+        <img src="./lazyadmin-directories.png">
+        <p>After browsing thought the found directories we find that <span class="text-high">/inc</span> includes <span class="text-high">"mysql_backup"</span> directory, that might be interesting. Let's download the file from this dir.</p></p>
+        <img src="./lazyadmin-sql.png" width="1500">
+        <p>We can find username and password hash in the code. We can try to crack it.</p>
+        <img src="./lazyadmin-john.png" width="1000">
+        <p>That worked out, not we are able to log in to the page located at <span class="text-high">/as</span>.</p>
+        <img src="./lazyadmin-page.png" width="900">
+        <p>The dashboard shows us version of the SweetRice - <span class="text-high">1.5.1</span>. This version is vulnerable to <span class="text-high">Unrestricted File Upload</span>. We will abuse it to upload reverse shell PHP code.</p>
+        <p>For the shell I will use PHP code already included in kali, it can be found at <span class="text-high">/usr/share/webshells/php/php-reverse-shell.php</span>. Don't forget to change the default IP address and port in the code.</p>
+        <img src="./lazyadmin-php-shell.png">
+        <p>Before uploading I had to change the file extension to <span class="text-high">.php5</span>. Now we are ready to open port using netcat and run the uploaded reverse shell.</p>
+        <p>The uploaded file is located at the same place as the mysql file we found earlier.</p>
+        <img src="./lazyadmin-directories-shell.png">
+        <img src="./lazyadmin-shell.png">
+        <p>Now we can obtain the user flag.</p>
+        <img src="./lazyadmin-flag-user.png">
+        <p>To escalate our privileges we will abuse sudo configuration which allows us to run perl file.</p>
+        <img src="./lazyadmin-sudo.png">
+        <p>Let's open the perl file to see what it does.</p>
+        <img src="./lazyadmin-perl.png">
+        <p>It just runs <span class="text-high">/etc/copy.sh</span> file. We might be able to write to this file.</p>
+        <img src="./lazyadmin-ls.png">
+        <p>We have permission to change the file. I will write <span class="text-high">/bin/bash</span> to it, so we get root shell when perl runs the file in context of root user.</p>
+        <img src="./lazyadmin-echo.png">
+        <p>After running the perl script with sudo we gained root shell.</p>
+        <p>Nothing stops us from reading root flag.</p>
+        <img src="./lazyadmin-root.png">
+        <img src="./4x.webp">
+    </div>
+</body>
+</html>
